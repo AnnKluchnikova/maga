@@ -1,0 +1,118 @@
+#!/bin/bash
+
+# Тема: оценка характеристик персонального компьютера (ПК).
+# Задание: Написать bash-скрипт, который выводит на экран характеристики ПК
+
+# Оформление
+LISTSYM="$(echo $'\u2726')"
+SKYBLUE="\033[36m"
+NOCOLOR="\033[0m"
+
+# Названия колонок в таблице
+COL1="№"
+COL2="Имя сетевого интерфейса "
+COL3="MAC-адрес"
+COL4="IP-адрес"
+COL5="Скорость соединения"
+
+# Общие данные
+current_date="$(date "+%d-%m-%Y")"
+my_account="$USER"
+my_hostname="$(cat /proc/sys/kernel/hostname)"
+
+# Информация о процессоре
+cpu_thread="$(lscpu | sed -n 6p)"
+cpu_model="$(lscpu | sed -n 13p)"
+cpu_count="$(lscpu | sed -n 4p)"
+cpu_arch="$(lscpu | sed -n 1p)"
+cpu_freq="$(lscpu | sed -n 15p)"
+
+# Информация об оперативной памяти
+mem_all="$(cat /proc/meminfo | grep "MemTotal")"
+mem_avail="$(cat /proc/meminfo | grep "MemAvailable")"
+
+# Информация о жестком диске
+# sda_all="$(lsblk | grep -w sda | awk '{print $4}')" # Инфор.в ГБ
+sda_all=0
+for full in $(df -k | grep sda | awk '{print $2}')
+do
+    sda_all=$((sda_all + full))  # Инфор.в КБ
+done
+
+# Смотрим доступное количество памяти в килобайтах у каждого диска
+# и суммируем эти значения
+sda_avail=0
+for avail in $(df -k | grep sda | awk '{print $4}')
+do
+    sda_avail=$((sda_avail + avail))
+done
+
+# Смотрим монтирование дисков, и если смонтирован к "/",
+# то складываем весь объем в килобайтах
+sda_mount=0
+for name in $(df | grep sda | awk '{print $1}')
+do
+    ret="$(df | grep -w ${name} | awk '{print $6}')"
+    if [ "$ret" == "/" ]
+    then
+        kbyte=$(df -k | grep -w ${name} | awk '{print $2}')
+        sda_mount=$((sda_mount + kbyte))
+    fi
+done
+
+swap_all="$(top -n 1 | grep Swap | awk '{print $3}')"
+swap_avail="$(top -n 1 | grep Swap | awk '{print $9}')"
+
+echo -e \
+    " Дата: ${current_date};\n" \
+    "Имя учетной записи: ${SKYBLUE}${my_account}${NOCOLOR};\n" \
+    "Доменное имя ПК: ${SKYBLUE}${my_hostname}${NOCOLOR};\n" \
+    "Процессор:\n" \
+    "\t${LISTSYM} Модель - ${cpu_model:21}\n" \
+    "\t${LISTSYM} Архитектура - ${cpu_arch:21}\n" \
+    "\t${LISTSYM} Тактовая частота - ${cpu_freq:21}\n" \
+    "\t${LISTSYM} Количество ядер - ${cpu_count:21}\n" \
+    "\t${LISTSYM} Количество потоков на одно ядро - ${cpu_thread:21}\n"\
+    "Оперативная память:\n" \
+    "\t${LISTSYM} Всего - ${mem_all:16}\n" \
+    "\t${LISTSYM} Доступно - ${mem_avail:16}\n" \
+    "Жесткий диск:\n" \
+    "\t${LISTSYM} Всего - ${sda_all} kB\n" \
+    "\t${LISTSYM} Доступно - ${sda_avail} kB\n" \
+    "\t${LISTSYM} Смонтировано в корневую директорию / - ${sda_mount} kB\n" \
+    "\t${LISTSYM} SWAP всего - ${swap_all} kB\n" \
+    "\t${LISTSYM} SWAP доступно - ${swap_avail} kB\n" \
+    "Сетевые интерфейсы:\n" \
+    "\t${LISTSYM} Количество сетевых интерфейсов -"
+
+# Для формирования талицы используем временный файл
+touch myfile
+column_name="${SKYBLUE}${COL1},${COL2},${COL3},${COL4},${COL5}${NOCOLOR}"
+echo -e "\t\t${column_name}" >> myfile
+
+# Счетчик интерфейсов
+counter=0
+
+# Информация о включенных сетевых интерфейсах
+for ifname in $(ip a | awk '/state UP/{print $2}')
+do
+    (( counter++ ))
+
+    # Убираем лишний символ ":" в конце названия
+    ifname=${ifname%:*}
+
+    # MAC-адрес
+    ifmac="$(cat /sys/class/net/${ifname}/address)"
+
+    # IP-адрес
+    ifip="$(ip -4 address show dev ${ifname} | grep inet | awk '/inet/{print $2}')"
+
+    # Скорость передачи
+    ifspeed="$(cat /sys/class/net/${ifname}/speed)"
+
+    result="${counter},${ifname},${ifmac},${ifip},${ifspeed}"
+    echo -e "\t\t${result}" >> myfile
+done
+
+column -t -s ',' myfile
+rm -f myfile
