@@ -77,7 +77,7 @@ int testing_int_cblas_sgemv(enum CBLAS_ORDER order,
                          enum CBLAS_TRANSPOSE transa, int m, int n, int lda,
                          int incx, int incy){
   int i, j;
-  const float *a, *x, *y;
+  float *a, *x, *y;
   float alpha = 1, beta = 0;
   clock_t start, stop;
 
@@ -109,7 +109,7 @@ int testing_int_cblas_sgemv(enum CBLAS_ORDER order,
   cblas_sgemv(order, transa, m, n, alpha, a, lda, x, incx,
                beta, y, incy);
   stop = clock();
-  printf("Loop required %f seconds", (stop - start) / CLK_TCK);
+  printf("Loop required %f seconds", (stop - start) / CLOCKS_PER_SEC);
 
   for( i = 0; i < n; i++ ) 
     printf(" y%d = %d\n", i, y[i]);
