@@ -93,13 +93,13 @@ int testing_int_cblas_sgemv(enum CBLAS_ORDER order,
     }
   }
 
+  printf("[INFO] PID: %d : Matrix:\n", pid);
   for(i = 0; i < m; i++){
-    printf("\n");
     for(j = 0; j < n; j++){
       printf("%d ", a[i*i+j]);
     }
+    printf("\n");
   }
-  printf("\n");
 
   free(a);
   free(x);
@@ -128,13 +128,13 @@ int testing_float_cblas_sgemv(enum CBLAS_ORDER order,
     }
   }
 
+  printf("[INFO] PID: %d : Matrix:\n", pid);
   for(i = 0; i < m; i++){
-    printf("\n");
     for(j = 0; j < n; j++){
       printf("%f ", a[i*i+j]);
     }
+    printf("\n");
   }
-  printf("\n");
 
   free(a);
   free(x);
@@ -143,9 +143,40 @@ int testing_float_cblas_sgemv(enum CBLAS_ORDER order,
   return SUCCESS;
 }
 
-// int testing_double_cblas_dgemv(){
+int testing_double_cblas_dgemv(enum CBLAS_ORDER order,
+                              enum CBLAS_TRANSPOSE transa, int m, int n,
+                              int lda, int incx, int incy){
+  int i, j;
+  double *a, *x, *y;
+  double alpha, beta;
 
-// }
+  printf("[DEBUG] PID: %d : Action: generating matrix values: Type: double\n",
+          pid);
+
+  a = (double *)malloc(sizeof(double)*m*n);
+  x = (double *)malloc(sizeof(double)*n);
+  y = (double *)malloc(sizeof(double)*n);
+
+  for(i = 0; i < m; i++){
+    for(j = 0; j < n; j++){
+      a[i*i+j] = random_double_value();
+    }
+  }
+
+  printf("[INFO] PID: %d : Matrix:\n", pid);
+  for(i = 0; i < m; i++){
+    for(j = 0; j < n; j++){
+      printf("%f ", a[i*i+j]);
+    }
+    printf("\n");
+  }
+
+  free(a);
+  free(x);
+  free(y);
+
+  return SUCCESS;
+}
 
 // [Главная программа] ---------------------------------------------------------
 
@@ -173,7 +204,7 @@ int main(int argc, char *argv[]){
 
   testing_int_cblas_sgemv(order, transa, m, n, lda, incx, incy);
   testing_float_cblas_sgemv(order, transa, m, n, lda, incx, incy);
-  // testing_double_cblas_dgemv(order, transa, m, n, lda, incx, incy);
+  testing_double_cblas_dgemv(order, transa, m, n, lda, incx, incy);
 
   printf("[DEBUG] PID: %d : Action: programm finished\n", pid);
   return SUCCESS;
