@@ -77,8 +77,9 @@ int testing_int_cblas_sgemv(enum CBLAS_ORDER order,
                          enum CBLAS_TRANSPOSE transa, int m, int n, int lda,
                          int incx, int incy){
   int i, j;
-  int *a, *x, *y;
-  int alpha, beta;
+  const float *a, *x, *y;
+  float alpha = 1, beta = 0;
+  clock_t start, stop;
 
   printf("[DEBUG] PID: %d : Action: generating matrix values: Type: int\n",
           pid);
@@ -91,6 +92,9 @@ int testing_int_cblas_sgemv(enum CBLAS_ORDER order,
     for(j = 0; j < n; j++){
       a[i*i+j] = random_int_value();
     }
+
+    x[i] = random_int_value();
+    y[i] = 0;
   }
 
   printf("[INFO] PID: %d : Matrix:\n", pid);
@@ -100,6 +104,15 @@ int testing_int_cblas_sgemv(enum CBLAS_ORDER order,
     }
     printf("\n");
   }
+
+  start = clock ();
+  cblas_sgemv(order, transa, m, n, alpha, a, lda, x, incx,
+               beta, y, incy);
+  stop = clock();
+  printf("Loop required %f seconds", (stop - start) / CLK_TCK);
+
+  for( i = 0; i < n; i++ ) 
+    printf(" y%d = %d\n", i, y[i]);
 
   free(a);
   free(x);
@@ -113,7 +126,7 @@ int testing_float_cblas_sgemv(enum CBLAS_ORDER order,
                               int lda, int incx, int incy){
   int i, j;
   float *a, *x, *y;
-  float alpha, beta;
+  float alpha = 1, beta = 0;
 
   printf("[DEBUG] PID: %d : Action: generating matrix values: Type: float\n",
           pid);
@@ -148,7 +161,7 @@ int testing_double_cblas_dgemv(enum CBLAS_ORDER order,
                               int lda, int incx, int incy){
   int i, j;
   double *a, *x, *y;
-  double alpha, beta;
+  double alpha = 1, beta = 0;
 
   printf("[DEBUG] PID: %d : Action: generating matrix values: Type: double\n",
           pid);
@@ -203,8 +216,8 @@ int main(int argc, char *argv[]){
   }
 
   testing_int_cblas_sgemv(order, transa, m, n, lda, incx, incy);
-  testing_float_cblas_sgemv(order, transa, m, n, lda, incx, incy);
-  testing_double_cblas_dgemv(order, transa, m, n, lda, incx, incy);
+  // testing_float_cblas_sgemv(order, transa, m, n, lda, incx, incy);
+  // testing_double_cblas_dgemv(order, transa, m, n, lda, incx, incy);
 
   printf("[DEBUG] PID: %d : Action: programm finished\n", pid);
   return SUCCESS;
