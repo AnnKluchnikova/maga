@@ -30,7 +30,7 @@ echo "____________________________________________________________________"
 ./test_o2 -o 2 -m "${cpu_model:21}" -c ${test_count} -f "${file_name}"
 echo "____________________________________________________________________"
 
-python3 lr2_parse_data_to_csv.py -f data_of_testing.txt -c ${test_count}
+python3 lr2_parse_data_to_csv.py -f ${file_name} -c ${test_count}
 
 # Удаляем исполняемые файлы
 rm test_*
