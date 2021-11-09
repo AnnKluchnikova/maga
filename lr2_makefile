@@ -2,6 +2,9 @@
 
 #Тема: Оценка производительности процессора.
 
+# Имя временного файла для записи данных экспериментов
+file_name="result.txt"
+
 # Определение модели процессора
 cpu_model="$(lscpu | sed -n 13p)"
 
@@ -15,15 +18,19 @@ gcc lr2_testing_process.c -o test_o1 -O1 -lopenblas
 gcc lr2_testing_process.c -o test_o2 -O2 -lopenblas
 
 # Задаем число испытаний типовых задач внутри тестовых программ
-test_count=100
+test_count=20
+
+rm ${file_name}
 
 # Поочередный запуск тестовых программ
-./test_o  -o 0 -m "${cpu_model:21}" -c ${test_count}
+./test_o  -o 0 -m "${cpu_model:21}" -c ${test_count} -f "${file_name}"
 echo "____________________________________________________________________"
-./test_o1 -o 1 -m "${cpu_model:21}" -c ${test_count}
+./test_o1 -o 1 -m "${cpu_model:21}" -c ${test_count} -f "${file_name}"
 echo "____________________________________________________________________"
-./test_o2 -o 2 -m "${cpu_model:21}" -c ${test_count}
+./test_o2 -o 2 -m "${cpu_model:21}" -c ${test_count} -f "${file_name}"
 echo "____________________________________________________________________"
+
+python3 lr2_parse_data_to_csv.py -f data_of_testing.txt -c ${test_count}
 
 # Удаляем исполняемые файлы
 rm test_*
